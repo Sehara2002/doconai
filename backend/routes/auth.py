@@ -31,7 +31,7 @@ async def get_current_user(request: Request):
     else:
         # Try getting from cookies
         token = request.cookies.get("access_token")
-        print(token)
+       
 
     if not token:
         raise HTTPException(

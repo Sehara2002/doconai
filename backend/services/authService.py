@@ -59,4 +59,4 @@ def _create_token(data: dict, expires_delta: timedelta) -> str:
     to_encode = data.copy()
     expire = datetime.utcnow() + expires_delta
     to_encode.update({"exp": expire})
-    return jwt.encode(to_encode, "settings.SECRET_KEY", algorithm="HS256")
+    return jwt.encode(to_encode, "your-secret-key", algorithm="HS256")

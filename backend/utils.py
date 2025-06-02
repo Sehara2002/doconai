@@ -1,7 +1,7 @@
 # utils.py
 from datetime import timedelta, datetime
 from passlib.context import CryptContext
-from jose import jwt
+from jose import jwt,JWTError
 
 REFRESH_TOKEN_EXPIRE_DAYS = 5
 # Password hashing setup
@@ -32,6 +32,7 @@ def create_refresh_token(user_id: str) -> str:
 
 def decode_token(token: str, secret_key: str, algorithm: str) -> dict:
     try:
+        print(token)
         payload = jwt.decode(token, secret_key, algorithms=[algorithm])
         return payload
     except JWTError as e:
