@@ -29,7 +29,7 @@ export default function Home() {
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-blue-50 to-white">
       <main className="flex flex-col items-center justify-center flex-1 px-4 text-center">
         <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
-          Welcome to <span className="text-blue-600">Pentagon</span>
+          Welcome to <span className="text-blue-600">Lawgan</span>
         </h1>
         
         <p className="mt-3 max-w-md text-lg text-gray-600 sm:text-xl md:mt-5 md:max-w-3xl">

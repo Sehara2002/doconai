@@ -8,6 +8,8 @@ import SessionsSidebar from '@/components/layout/SessionSidebar';
 import { Toaster } from 'sonner';
 import { Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import { useAuth } from '@/lib/context/AuthContext'
 
 // Create session context
 type SessionContextType = {
@@ -28,6 +30,23 @@ export function useSessionContext() {
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeSession, setActiveSession] = useState<{ id: string; title: string } | null>(null);
+  const { user,isAuthenticated, loading } = useAuth() 
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <LoadingSpinner/>
+      </div>
+    )
+  }
+
+  // const handleGetStarted = () => {
+  //   if (isAuthenticated) {
+  //     router.push('/dashboard')
+  //   } else {
+  //     router.push('/login')
+  //   }
+  // }
 
   return (
     <AuthProvider>

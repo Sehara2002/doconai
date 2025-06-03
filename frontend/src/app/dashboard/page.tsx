@@ -6,8 +6,14 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { useSessionContext } from '@/app/dashboard/layout';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/lib/context/AuthContext'
+
+
 
 const createSession = async (userId: string, setActiveSession: any, router: any) => {
+
+  
+  
   try {
     const data = {
       user_id: userId,
@@ -31,8 +37,11 @@ export default function DashboardPage() {
   const { setActiveSession } = useSessionContext();
   const router = useRouter();
   const userId = '68393605181b9fb5e3e48e01'; // Replace with actual user ID
-
+  const { user,isAuthenticated, loading } = useAuth() 
+  
   return (
+
+    
     <div className="h-full flex items-center justify-center">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">

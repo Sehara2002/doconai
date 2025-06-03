@@ -156,13 +156,13 @@ async def signup(
 @router.post("/login", status_code=status.HTTP_200_OK)
 async def login(user_data: UserLogin,response: Response):
     try:
-        
+        print(user_data)
         # Authenticate user
         user = await AuthService.authenticate_user(user_data.email, user_data.password)
         if not user:
             raise ValueError("Invalid email or password")
         
-        
+        print(user)
         # Generate tokens
         tokens = await AuthService.create_tokens(user["id"])
         
@@ -203,3 +203,61 @@ async def login(user_data: UserLogin,response: Response):
             detail=f"Login failed: {str(e)}"
         )
 
+
+@router.post("/logout", status_code=status.HTTP_200_OK)
+async def logout(response: Response):
+    # Clear access token cookie
+    response.delete_cookie(
+        key="access_token",
+        domain=DOMAIN,
+        path="/"
+    )
+    
+    # Clear refresh token cookie
+    response.delete_cookie(
+        key="refresh_token",
+        domain=DOMAIN,
+        path="/"
+    )
+    
+    return {"message": "Successfully logged out"}
+
+
+
+# Add this function to your auth router
+async def get_current_user_from_token(request: Request) -> dict:
+    """Reusable dependency to get current user from token"""
+    auth_header = request.headers.get("Authorization")
+    token = auth_header[7:] if auth_header and auth_header.startswith("Bearer ") else request.cookies.get("access_token")
+    
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated"
+        )
+    
+    try:
+        payload = decode_token(token, SECRET_KEY, ALGORITHM)
+        user_id = payload.get("sub")
+        
+        if not user_id:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token payload"
+            )
+        
+        user = await users_collection.find_one({"id": user_id}, {"_id": 0, "hashed_password": 0})
+        
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+            
+        return user
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Invalid token: {str(e)}"
+        )

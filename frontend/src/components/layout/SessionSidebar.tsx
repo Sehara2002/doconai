@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useSessionContext } from '@/app/dashboard/layout';
-// import { getSessions, createSession, ChatSession } from '@/lib/api/chat';
+import axios from 'axios'
 import {toast} from 'sonner'
 
 const SessionsSidebar = ({ 
@@ -25,10 +25,14 @@ const SessionsSidebar = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
    const { activeSession } = useSessionContext(); // Moved to top level
+   const {logout} =useAuth();
   
-  
-  useEffect(() => {
-    const fetchSessions = async () => {
+  const getSessions=async()=>{
+    const res=await axios.get('http://localhost:8000/sessions',{withCredentials:true});
+    return res.data.sessions;
+  }
+
+  const fetchSessions = async () => {
       try {
         const data = await getSessions();
         setSessions(data);
@@ -42,6 +46,8 @@ const SessionsSidebar = ({
       // }
       }
     };
+  useEffect(() => {
+    
 
     fetchSessions();
   }, [setActiveSession]);
@@ -51,19 +57,14 @@ const SessionsSidebar = ({
     session.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const createNewSession = () => {
+  const createNewSession = async() => {
     const newId = Date.now().toString();
-    const newSession = {
-      id: newId,
-      title: 'New legal consultation',
-      date: new Date().toISOString().split('T')[0],
-      unread: 0
-    };
+    const res = await axios.post('http://localhost:8000/sessions/create',{title:"New legal consultation"},{withCredentials:true})
     
-    setSessions([newSession, ...sessions]);
-    setActiveSession({ id: newId, title: newSession.title });
-    router.push(`/dashboard/chat/${newId}`);
-    
+    // setSessions([newSession, ...sessions]);
+    // setActiveSession({ id: newId, title: newSession.title });
+    // router.push(`/dashboard/chat/${newId}`);
+    fetchSessions();
     if (onClose) onClose();
   };
 
@@ -91,6 +92,11 @@ const SessionsSidebar = ({
     if (onClose) onClose();
   };
 
+  const handleLogout = async()=>{
+    setActiveSession(null);
+    await logout();
+    router.push('/login');
+  }
   return (
     <aside className="w-64 h-full flex flex-col ">
       <div className="p-4 border-b">
@@ -207,10 +213,7 @@ const SessionsSidebar = ({
             <Button 
               variant="ghost" 
               size="icon"
-              onClick={() => {
-                setActiveSession(null);
-                router.push('/login');
-              }}
+              onClick={handleLogout}
               title="Logout"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

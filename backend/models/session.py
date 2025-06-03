@@ -1,7 +1,20 @@
 from pydantic import BaseModel, Field
-from typing import Optional
+from datetime import datetime
+from typing import List
+from bson import ObjectId
 
-class ChatSession(BaseModel):
-    id: Optional[str] = Field(alias="_id")
-    user_id: str
+class SessionCreate(BaseModel):
     title: str
+
+class SessionResponse(BaseModel):
+    id: str  # Remove alias
+    title: str
+    created_at: datetime
+
+    class Config:
+        json_encoders = {
+            datetime: lambda v: v.isoformat()
+        }
+
+class SessionsList(BaseModel):
+    sessions: List[SessionResponse]
