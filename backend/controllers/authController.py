@@ -22,9 +22,10 @@ class AuthService:
         
         # Check if email exists
         existing_user = await users_collection.find_one({"email": user_data.email})
+        
         if existing_user:
             raise ValueError("Email already registered")
-        
+
         # Create user ID and hash password
         user_id = str(uuid.uuid4())
         hashed_password = get_password_hash(user_data.password)
@@ -43,24 +44,7 @@ class AuthService:
         if not result.inserted_id:
             raise ValueError("Failed to create user")
         
-        # Generate tokens
-        return Token(
-            access_token=create_access_token(
-                data={"sub": user_id},
-                expires_delta=timedelta(minutes=24),
-                secret_key="your-secret-key",
-                algorithm="HS256"
-            ),
-
-            token_type="bearer",
-            refresh_token=create_refresh_token(
-                data={"sub": user_id},
-                expires_delta=timedelta(days=7),
-                secret_key="your-secret-key",
-                algorithm="HS256"
-            )
-
-        )
+    
 
     @staticmethod
     async def get_user_by_email(email: str):

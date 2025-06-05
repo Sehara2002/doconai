@@ -1,21 +1,21 @@
 'use client';
 
-import { useAuth } from '@/lib/context/AuthContext';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/lib/context/AuthContext';
 
 interface MessageBubbleProps {
   message: {
     id: string;
-    sender: string;
     content: string;
-    timestamp: string;
+    role: 'user' | 'assistant';
+    created_at: string;
   };
 }
 
 const MessageBubble = ({ message }: MessageBubbleProps) => {
   const { user } = useAuth();
-  const isOwnMessage = message.sender === user?.id;
+  const isOwnMessage = message.role === 'user';
 
   return (
     <div className={cn(
@@ -35,7 +35,7 @@ const MessageBubble = ({ message }: MessageBubbleProps) => {
           'text-xs mt-1',
           isOwnMessage ? 'text-right text-gray-500 dark:text-gray-400' : 'text-gray-500 dark:text-gray-400'
         )}>
-          {format(new Date(message.timestamp), 'h:mm a')}
+          {format(new Date(message.created_at), 'h:mm a')}
         </div>
       </div>
     </div>

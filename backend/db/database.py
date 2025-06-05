@@ -18,6 +18,7 @@ client = AsyncIOMotorClient(MONGO_URI)
 db = client[DB_NAME]
 users_collection = db["users"]
 sessions_collection = db["sessions"]
+messages_collection = db["messages"]
 
 async def connect_to_mongo():
     print("📦 Connected to MongoDB!")

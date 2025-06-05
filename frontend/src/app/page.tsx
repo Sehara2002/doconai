@@ -58,7 +58,7 @@ export default function Home() {
 
       <footer className="w-full py-6 border-t">
         <div className="container flex items-center justify-between">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-500 pl-15">
             © {new Date().getFullYear()} Pentagon. All rights reserved.
           </p>
         </div>

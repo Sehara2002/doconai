@@ -1,8 +1,8 @@
-// components/chat/ChatInput.tsx
 'use client';
 
 import React, { useRef, useEffect } from 'react';
 import { UseFormRegister, FieldValues, Path } from 'react-hook-form';
+import { Loader2 } from 'lucide-react';
 
 interface ChatInputProps<T extends FieldValues> {
   name: Path<T>;
@@ -10,6 +10,7 @@ interface ChatInputProps<T extends FieldValues> {
   error?: string;
   placeholder?: string;
   onKeyDown?: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
+  disabled?: boolean;
 }
 
 const ChatInput = <T extends FieldValues>({
@@ -18,6 +19,7 @@ const ChatInput = <T extends FieldValues>({
   error,
   placeholder = 'Type a message...',
   onKeyDown,
+  disabled = false,
 }: ChatInputProps<T>) => {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const { ref, ...rest } = register(name);
@@ -53,9 +55,10 @@ const ChatInput = <T extends FieldValues>({
         }}
         placeholder={placeholder}
         onKeyDown={onKeyDown}
+        disabled={disabled}
         className={`w-full px-4 py-3 pr-10 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 ${
           error ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
-        } dark:bg-gray-800 dark:text-white`}
+        } dark:bg-gray-700 dark:text-white disabled:opacity-50`}
         rows={1}
       />
       {error && <p className="text-red-500 text-sm mt-1">{error}</p>}

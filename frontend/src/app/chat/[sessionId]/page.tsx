@@ -1,15 +1,15 @@
-// app/dashboard/chat/[sessionId]/page.tsx
 'use client';
 
 import { useEffect } from 'react';
 import { useSessionContext } from '@/app/dashboard/layout';
 import ChatInterface from '@/components/chat/ChatInterface';
-import { useParams } from 'next/navigation'; // Add this import
+import { useParams } from 'next/navigation';
+import { Loader2 } from 'lucide-react';
 
 export default function ChatPage() {
   const { activeSession, setActiveSession } = useSessionContext();
-  const params = useParams(); // Get params from hook
-  const sessionId = params.sessionId as string; // Cast to string
+  const params = useParams();
+  const sessionId = params.sessionId as string;
 
   useEffect(() => {
     if (sessionId) {
@@ -22,9 +22,17 @@ export default function ChatPage() {
     }
   }, [sessionId, activeSession, setActiveSession]);
 
+  if (!sessionId) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <Loader2 className="h-12 w-12 animate-spin text-blue-500" />
+      </div>
+    );
+  }
+
   return (
     <div className="h-full flex flex-col">
-      {sessionId ? <ChatInterface sessionId={sessionId} /> : <p>Loading session...</p>}
+      <ChatInterface sessionId={sessionId} />
     </div>
   );
 }

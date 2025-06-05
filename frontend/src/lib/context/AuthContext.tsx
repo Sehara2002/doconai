@@ -17,6 +17,14 @@ interface AuthContextType {
   isAuthenticated: boolean;
   loading: boolean;
 }
+ type SignupFormData = {
+  name: string;
+  email: string;
+  birthday: string;
+  password: string;
+  confirm_password: string;
+};
+
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -88,6 +96,24 @@ const refreshTokens = async () => {
   }
 };
 
+
+const signup = async (formData: SignupFormData) => {
+  try {
+    const response = await axios.post('http://localhost:8000/auth/signup',formData,{ withCredentials: true }
+    );
+    // Get the user info after signup
+    const meResponse = await axios.get(
+      'http://localhost:8000/auth/me',
+      { withCredentials: true }
+    );
+
+    setUser(meResponse.data);
+  } catch (error) {
+    console.error('Signup failed:', error);
+    throw new Error('Signup failed');
+  }
+};
+
   
   const value = {
     user,
@@ -95,7 +121,8 @@ const refreshTokens = async () => {
     logout,
     refreshTokens,
     isAuthenticated: !!user,
-    loading
+    loading,
+    signup
   };
 
   return (

@@ -38,20 +38,5 @@ async def create_new_session(
             detail=f"Session creation failed: {str(e)}"
         )
 
-@router.get("/{session_id}", response_model=SessionResponse)
-async def get_session(
-    session_id: str,
-    current_user: dict = Depends(get_current_user_from_token)
-):
-    user_id = current_user["id"]
-    session = await get_session_by_id(session_id, user_id)
-    
-    if not session:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Session not found or access denied"
-        )
-    
-    return session
 
 

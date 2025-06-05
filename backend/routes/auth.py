@@ -114,34 +114,37 @@ async def refresh_token(request: Request, response: Response):
         )
 
 @router.post("/signup", status_code=status.HTTP_201_CREATED)
-async def signup(
-    user: UserCreate,
-    response: Response
-):
+async def signup(user: UserCreate, response: Response):
     try:
-        tokens = await AuthService.register(user)
-        
+        user_id = await AuthService.register(user)  # ✅ get id from return value
+
+        tokens = await AuthService.create_tokens(user_id)  # ✅ now use this
+
         # Set HTTP-only cookies
         response.set_cookie(
             key="access_token",
             value=tokens.access_token,
             httponly=True,
             max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-            secure= "production",
-            samesite="lax"
+            secure=False,
+            samesite="lax",
+            domain=DOMAIN,
+            path="/"
         )
-        
+
         response.set_cookie(
             key="refresh_token",
             value=tokens.refresh_token,
             httponly=True,
             max_age=REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
-            secure="production",
-            samesite="lax"
+            secure=False,
+            samesite="lax",
+            domain=DOMAIN,
+            path="/"
         )
-        
+
         return {"message": "User created successfully"}
-        
+
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

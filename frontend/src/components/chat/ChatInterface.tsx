@@ -1,4 +1,3 @@
-// components/chat/ChatInterface.tsx
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -7,16 +6,20 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { MessageSchema } from '@/lib/validation/schemas';
 import { z } from 'zod';
 import { toast } from 'sonner';
-import { createMessage, getMessages, Message } from '@/lib/api/chat';
+import { createMessage, getMessages, type Message } from '@/lib/api/chat';
 import ChatInput from './ChatInput';
 import MessageBubble from './MessageBubble';
+import { useAuth } from '@/lib/context/AuthContext';
+import { Loader2 } from 'lucide-react';
 
 type FormData = z.infer<typeof MessageSchema>;
 
 export default function ChatInterface({ sessionId }: { sessionId: string }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isSending, setIsSending] = useState(false);
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
+  const { user } = useAuth();
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(MessageSchema),
@@ -51,9 +54,16 @@ export default function ChatInterface({ sessionId }: { sessionId: string }) {
   };
 
   const onSubmit = async (data: FormData) => {
+    if (!user) {
+      toast.error('You need to be logged in to send messages');
+      return;
+    }
+    
     try {
+      setIsSending(true);
+      
       // Add user message immediately for better UX
-      const tempId = Date.now().toString();
+      const tempId = `temp-${Date.now()}`;
       setMessages(prev => [...prev, {
         id: tempId,
         content: data.content,
@@ -75,13 +85,15 @@ export default function ChatInterface({ sessionId }: { sessionId: string }) {
       console.error(error);
       // Remove temporary message on error
       setMessages(prev => prev.filter(msg => msg.id !== tempId));
+    } finally {
+      setIsSending(false);
     }
   };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        <Loader2 className="h-12 w-12 animate-spin text-blue-500" />
       </div>
     );
   }
@@ -91,9 +103,9 @@ export default function ChatInterface({ sessionId }: { sessionId: string }) {
       <div className="flex-1 overflow-y-auto p-4 bg-gray-50 dark:bg-gray-900">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center p-4">
-            <div className="bg-gray-200 border-2 border-dashed rounded-xl w-16 h-16 mb-4" />
-            <h3 className="text-xl font-semibold">No messages yet</h3>
-            <p className="text-gray-500 mt-2">
+            <div className="bg-gray-200 border-2 border-dashed rounded-xl w-16 h-16 mb-4 dark:bg-gray-700" />
+            <h3 className="text-xl font-semibold dark:text-white">No messages yet</h3>
+            <p className="text-gray-500 dark:text-gray-400 mt-2">
               Start a conversation by sending your first message
             </p>
           </div>
@@ -114,13 +126,16 @@ export default function ChatInterface({ sessionId }: { sessionId: string }) {
             register={register}
             error={errors.content?.message}
             placeholder="Type a legal question..."
+            disabled={isSending}
           />
           <button
             type="submit"
-            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
-            disabled={loading}
+            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center w-24"
+            disabled={isSending}
           >
-            Send
+            {isSending ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : 'Send'}
           </button>
         </form>
       </div>
