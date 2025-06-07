@@ -1,7 +1,7 @@
-// Page.tsx - Enhanced Professional Version
+// Page.tsx - Enhanced Professional Version with Optimized Loading
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import ChatInterface from '@/components/chat/ChatInterface';
 import { useParams } from 'next/navigation';
 import axios from 'axios';
@@ -20,22 +20,45 @@ const Page = () => {
   const sessionId = params.sessionId as string;
   const [messageData, setMessageData] = useState<ApiMessage[]>([]);
   const [loading, setLoading] = useState(true);
+  const [lastFetchTime, setLastFetchTime] = useState<number>(0);
 
-  const fetchMessages = async () => {
+  const fetchMessages = useCallback(async (force = false) => {
+    // Prevent too frequent fetches (minimum 1 second between fetches)
+    const now = Date.now();
+    if (!force && now - lastFetchTime < 1000) {
+      return;
+    }
+
     try {
-      setLoading(true);
+      if (force) setLoading(true);
+      
       const response = await axios.get(`http://localhost:8000/messages/${sessionId}`);
-      setMessageData(response.data);
+      
+      // Only update if data actually changed
+      setMessageData(prevData => {
+        const newData = response.data;
+        if (JSON.stringify(prevData) !== JSON.stringify(newData)) {
+          return newData;
+        }
+        return prevData;
+      });
+      
+      setLastFetchTime(now);
     } catch (error) {
       console.error('Error fetching messages:', error);
     } finally {
-      setLoading(false);
+      if (force) setLoading(false);
     }
-  };
+  }, [sessionId, lastFetchTime]);
+
+  // Optimized refresh function that doesn't show loading
+  const handleNewMessage = useCallback(() => {
+    fetchMessages(false);
+  }, [fetchMessages]);
 
   useEffect(() => {
-    fetchMessages();
-  }, [sessionId]);
+    fetchMessages(true); // Force initial load
+  }, [sessionId]); // Only depend on sessionId
 
   if (loading) {
     return (
@@ -91,7 +114,7 @@ const Page = () => {
         <ChatInterface 
           sessionId={sessionId} 
           initialMessages={messageData}
-          onNewMessage={fetchMessages} 
+          onNewMessage={handleNewMessage} 
         />
       </div>
     </div>
