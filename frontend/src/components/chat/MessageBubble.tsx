@@ -15,10 +15,11 @@ interface MessageBubbleProps {
   };
 }
 
+
 const MessageBubble = ({ message }: MessageBubbleProps) => {
   const isOwnMessage = message.role === 'user';
   const [showActions, setShowActions] = useState(false);
-
+  console.log(message)
   const copyToClipboard = () => {
     navigator.clipboard.writeText(message.content);
   };
@@ -73,7 +74,7 @@ const MessageBubble = ({ message }: MessageBubbleProps) => {
                 >
                   <Copy className="w-3 h-3 text-gray-600 dark:text-gray-400" />
                 </button>
-                <button
+                {/* <button
                   className="p-1.5 bg-white dark:bg-gray-800 rounded-full shadow-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                   title="Like message"
                 >
@@ -84,7 +85,7 @@ const MessageBubble = ({ message }: MessageBubbleProps) => {
                   title="Dislike message"
                 >
                   <ThumbsDown className="w-3 h-3 text-gray-600 dark:text-gray-400" />
-                </button>
+                </button> */}
               </div>
             )}
           </div>

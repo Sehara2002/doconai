@@ -7,6 +7,15 @@ from jose import JWTError, jwt
 from datetime import datetime, timedelta
 from util.gemini import get_ai_reply
 from typing import Optional
+import pytz
+
+
+SRI_LANKA_TZ = pytz.timezone('Asia/Colombo')
+
+def get_local_time():
+    """Get current time in Sri Lanka timezone"""
+    return datetime.now(SRI_LANKA_TZ)
+
 
 SECRET_KEY = "your-secret-key"
 ALGORITHM = "HS256"

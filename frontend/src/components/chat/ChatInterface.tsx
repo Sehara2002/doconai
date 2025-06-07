@@ -1,4 +1,4 @@
-// ChatInterface.tsx - Enhanced Professional Version
+// ChatInterface.tsx - Enhanced Professional Version with Optimistic Updates
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -11,6 +11,7 @@ import { useAuth } from '@/lib/context/AuthContext';
 import ChatInput from './ChatInput';
 import MessageBubble from './MessageBubble';
 import { Loader2, MessageSquare, Sparkles } from 'lucide-react';
+import axios from 'axios';
 
 const FormMessageSchema = z.object({
   content: z.string().min(1, { message: 'Message cannot be empty' })
@@ -18,15 +19,18 @@ const FormMessageSchema = z.object({
 
 type FormData = z.infer<typeof FormMessageSchema>;
 
+interface Message {
+  id: string;
+  session_id: string;
+  sender: 'user' | 'bot';
+  content: string;
+  timestamp: string;
+  isTemporary?: boolean;
+}
+
 interface ChatInterfaceProps {
   sessionId: string;
-  initialMessages: {
-    id: string;
-    session_id: string;
-    sender: 'user' | 'bot';
-    content: string;
-    timestamp: string;
-  }[];
+  initialMessages: Message[];
   onNewMessage: () => void;
 }
 
@@ -35,9 +39,10 @@ export default function ChatInterface({
   initialMessages,
   onNewMessage
 }: ChatInterfaceProps) {
-  const [messages, setMessages] = useState(initialMessages);
+  const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [isSending, setIsSending] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
+  const [shouldMaintainScroll, setShouldMaintainScroll] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
 
@@ -53,13 +58,51 @@ export default function ChatInterface({
     }
   });
 
+  // Only update messages if they're actually different (avoid unnecessary re-renders)
   useEffect(() => {
-    setMessages(initialMessages);
+    const hasChanged = 
+      initialMessages.length !== messages.filter(m => !m.isTemporary).length ||
+      initialMessages.some((msg, index) => {
+        const nonTempMessages = messages.filter(m => !m.isTemporary);
+        return !nonTempMessages[index] || nonTempMessages[index].id !== msg.id;
+      });
+
+    if (hasChanged) {
+      // Preserve temporary messages and add new real messages
+      setMessages(prev => {
+        const tempMessages = prev.filter(m => m.isTemporary);
+        return [...initialMessages, ...tempMessages];
+      });
+    }
   }, [initialMessages]);
 
+  // Auto-scroll only when new messages arrive or typing indicator shows
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, isTyping]);
+    if (shouldMaintainScroll) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages, isTyping, shouldMaintainScroll]);
+
+  const fetchLatestMessages = async () => {
+    try {
+      const response = await axios.get(`http://localhost:8000/messages/${sessionId}`);
+      const latestMessages = response.data;
+      
+      // Remove temporary messages and update with real ones
+      setMessages(prev => {
+        const realMessages = prev.filter(m => !m.isTemporary);
+        if (latestMessages.length > realMessages.length) {
+          return latestMessages;
+        }
+        return prev;
+      });
+      
+      setIsTyping(false);
+    } catch (error) {
+      console.error('Error fetching latest messages:', error);
+      setIsTyping(false);
+    }
+  };
 
   const onSubmit = async (data: FormData) => {
     if (!user) {
@@ -68,21 +111,25 @@ export default function ChatInterface({
     }
 
     const tempId = `temp-${Date.now()}`;
-    const tempMessage = {
+    const tempUserMessage: Message = {
       id: tempId,
       session_id: sessionId,
-      sender: 'user' as const,
+      sender: 'user',
       content: data.content,
       timestamp: new Date().toISOString(),
+      isTemporary: true
     };
 
     try {
       setIsSending(true);
-      setMessages(prev => [...prev, tempMessage]);
+      setShouldMaintainScroll(true);
+      
+      // Add temporary user message immediately
+      setMessages(prev => [...prev, tempUserMessage]);
       reset();
 
-      // Show typing indicator
-      setIsTyping(true);
+      // Show typing indicator after a brief delay
+      setTimeout(() => setIsTyping(true), 500);
       
       // Send message to API
       await createMessage({
@@ -91,15 +138,13 @@ export default function ChatInterface({
         content: data.content,
       });
       
-      // Simulate AI thinking time
-      setTimeout(() => {
-        setIsTyping(false);
-        onNewMessage();
-      }, 1500);
+      // Fetch updated messages after API call
+      setTimeout(fetchLatestMessages, 1500);
       
     } catch (err) {
       toast.error('Message sending failed');
       console.error(err);
+      // Remove temporary message on error
       setMessages(prev => prev.filter(msg => msg.id !== tempId));
       setIsTyping(false);
     } finally {
@@ -159,15 +204,16 @@ export default function ChatInterface({
         ) : (
           <div className="p-6 space-y-6">
             {messages.map((message) => (
-              <MessageBubble 
-                key={message.id} 
-                message={{
-                  id: message.id,
-                  content: message.content,
-                  role: message.sender === 'bot' ? 'assistant' : 'user',
-                  created_at: message.timestamp
-                }} 
-              />
+              <div key={message.id} className={message.isTemporary ? 'opacity-70' : ''}>
+                <MessageBubble 
+                  message={{
+                    id: message.id,
+                    content: message.content,
+                    role: message.sender === 'bot' ? 'assistant' : 'user',
+                    created_at: message.timestamp
+                  }} 
+                />
+              </div>
             ))}
             {isTyping && <TypingIndicator />}
             <div ref={messagesEndRef} />
