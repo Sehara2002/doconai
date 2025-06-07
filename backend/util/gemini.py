@@ -1,7 +1,7 @@
 import google.generativeai as genai
 
 # Replace with your actual Gemini API key
-genai.configure(api_key="AIzaSyANS1TCO4NDxO9g6c2gtQoQGFYFVeKAKQA")
+genai.configure(api_key="AIzaSyBQbK4MobPMlqgi5LtCMle4EaPDMjcyNKk")
 
 # Load the model with safety settings
 model = genai.GenerativeModel('gemini-2.0-flash',
