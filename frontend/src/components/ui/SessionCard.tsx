@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Trash2, Edit } from 'lucide-react';
-import { formatDate } from '@/lib/utils';
-import { cn } from '@/lib/utils';
+import { formatDate } from '@/lib/utils/utils';
+import { cn } from '@/lib/utils/utils';
 
 interface SessionCardProps {
   session: {

@@ -2,9 +2,10 @@
 'use client';
 
 import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils/utils';
 import { Bot, User, Copy, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { useState } from 'react';
+import {  formatText } from '@/lib/utils/formatBiography';
 
 interface MessageBubbleProps {
   message: {
@@ -19,7 +20,6 @@ interface MessageBubbleProps {
 const MessageBubble = ({ message }: MessageBubbleProps) => {
   const isOwnMessage = message.role === 'user';
   const [showActions, setShowActions] = useState(false);
-  console.log(message)
   const copyToClipboard = () => {
     navigator.clipboard.writeText(message.content);
   };
@@ -57,7 +57,7 @@ const MessageBubble = ({ message }: MessageBubbleProps) => {
           )}>
             <div className="prose prose-sm max-w-none">
               <p className="whitespace-pre-wrap break-words m-0 leading-relaxed">
-                {message.content}
+                {formatText(message.content)}
               </p>
             </div>
 
