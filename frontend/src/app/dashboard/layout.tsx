@@ -39,13 +39,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     )
   }
 
-  // const handleGetStarted = () => {
-  //   if (isAuthenticated) {
-  //     router.push('/dashboard')
-  //   } else {
-  //     router.push('/login')
-  //   }
-  // }
 
   return (
     <AuthProvider>
@@ -86,7 +79,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           <div className="flex flex-col flex-1 overflow-hidden">
             <Header />
             
-            <main className="flex-1 overflow-y-auto p-4 md:p-6">
+            <main className="flex-1 ">
               {children}
             </main>
           </div>

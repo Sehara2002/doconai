@@ -3,50 +3,49 @@ from bson import ObjectId
 from datetime import datetime
 from schemas.messageSchema import MessageCreate
 
-
-
-def serialize_message(message) -> dict:
-    message["_id"] = str(message["_id"])
-    return message
-
-async def get_messages_by_session(session_id: str):
-    messages = await messages_collection.find({"session_id": session_id}).to_list(length=100)
+async def get_messages_by_session(session_id: ObjectId, skip: int = 0, limit: int = 100):
+    messages = await messages_collection.find({"session_id": str(session_id)}) \
+        .sort("timestamp", 1) \
+        .skip(skip) \
+        .limit(limit) \
+        .to_list(length=None)
     return [serialize_message(msg) for msg in messages]
 
 async def create_message(message: MessageCreate):
     message_dict = message.dict()
     message_dict["timestamp"] = datetime.utcnow()
     result = await messages_collection.insert_one(message_dict)
-    message_dict["_id"] = str(result.inserted_id)
-    return message_dict
+    new_message = await messages_collection.find_one({"_id": result.inserted_id})
+    return serialize_message(new_message)
 
-async def update_message(message_id: str, message: MessageCreate):
+async def update_message(message_id: ObjectId, message: MessageCreate):
+    # Preserve original timestamp
+    original = await messages_collection.find_one({"_id": message_id})
+    if not original:
+        return None
+        
+    update_data = message.dict()
+    update_data["timestamp"] = original["timestamp"]
+    
     updated = await messages_collection.find_one_and_update(
-        {"_id": ObjectId(message_id)},
-        {"$set": message.dict()},
+        {"_id": message_id},
+        {"$set": update_data},
         return_document=True
     )
     return serialize_message(updated) if updated else None
 
-async def delete_message(message_id: str):
-    result = await messages_collection.delete_one({"_id": ObjectId(message_id)})
+async def delete_message(message_id: ObjectId):
+    result = await messages_collection.delete_one({"_id": message_id})
     return result.deleted_count > 0
 
-
-
-# from db.database import db
-# from schemas.messageSchema import MessageCreate
-# from datetime import datetime
-
-# async def create_message(message: MessageCreate):
-#     message_data = message.dict()
-#     message_data["timestamp"] = datetime.utcnow()
-#     result = await db.messages.insert_one(message_data)
-#     return str(result.inserted_id)
-
-# async def get_messages_by_session(session_id: str):
-#     messages = []
-#     async for message in db.messages.find({"session_id": session_id}).sort("timestamp", 1):
-#         message["id"] = str(message["_id"])
-#         messages.append(message)
-#     return messages
+def serialize_message(message) -> dict:
+    if message:
+        return {
+            "id": str(message["_id"]),
+            "session_id": message["session_id"],
+            "sender": message["sender"],
+            "content": message["content"],
+            "reply_to_id": message.get("reply_to_id", None),  # default None if missing
+            "timestamp": message["timestamp"],
+        }
+    return None

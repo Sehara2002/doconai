@@ -14,6 +14,8 @@ app.include_router(sessionRoutes.router)
 app.include_router(messageRoutes.router)
 app.include_router(auth.router)
 
+
+
 # Add exception handlers
 app.add_exception_handler(Exception, error_handlers.global_exception_handler)
 app.add_exception_handler(RequestValidationError, error_handlers.validation_exception_handler)

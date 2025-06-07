@@ -92,11 +92,29 @@ const SessionsSidebar = ({
     if (onClose) onClose();
   };
 
-  const handleLogout = async()=>{
-    setActiveSession(null);
-    await logout();
-    router.push('/login');
+  const handleLogout = async () => {
+  setActiveSession(null);
+
+  const logoutPromise = toast.promise(
+    logout(), // This is the async function being tracked
+    {
+      loading: 'Logging out...',
+      success: 'Logged out successfully!',
+      error: 'Logout failed. Please try again.',
+    }
+  );
+
+  try {
+    await logoutPromise;
+    setTimeout(()=>{
+      window.location.href = '/';
+    },1000)
+     // Full page reload to root
+  } catch (error) {
+    // No need to toast here again, it's already handled in toast.promise
+    console.error('Logout error:', error);
   }
+};
   return (
     <aside className="w-64 h-full flex flex-col ">
       <div className="p-4 border-b">

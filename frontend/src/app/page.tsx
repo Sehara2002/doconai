@@ -21,7 +21,7 @@ export default function Home() {
     if (isAuthenticated) {
       router.push('/dashboard')
     } else {
-      router.push('/login')
+      router.push('/signup')
     }
   }
 
@@ -37,13 +37,12 @@ export default function Home() {
         </p>
 
         <div className="mt-8 flex gap-4">
-          <Button 
+            <Button 
             size="lg"
             onClick={handleGetStarted}
           >
             Get Started
           </Button>
-          
           {!user && (
             <Button 
               variant="outline" 
