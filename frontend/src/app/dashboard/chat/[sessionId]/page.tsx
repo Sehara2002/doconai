@@ -1,11 +1,11 @@
-// Page.tsx - Enhanced Professional Version with Optimized Loading
+// Page.tsx - Minimalist Professional Version
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
 import ChatInterface from '@/components/chat/ChatInterface';
 import { useParams } from 'next/navigation';
 import axios from 'axios';
-import { Loader2, Bot, User, Clock, Hash } from 'lucide-react';
+import { Loader2, MessageCircle, Hash } from 'lucide-react';
 
 interface ApiMessage {
   id: string;
@@ -23,7 +23,6 @@ const Page = () => {
   const [lastFetchTime, setLastFetchTime] = useState<number>(0);
 
   const fetchMessages = useCallback(async (force = false) => {
-    // Prevent too frequent fetches (minimum 1 second between fetches)
     const now = Date.now();
     if (!force && now - lastFetchTime < 1000) {
       return;
@@ -34,7 +33,6 @@ const Page = () => {
       
       const response = await axios.get(`http://localhost:8000/messages/${sessionId}`);
       
-      // Only update if data actually changed
       setMessageData(prevData => {
         const newData = response.data;
         if (JSON.stringify(prevData) !== JSON.stringify(newData)) {
@@ -51,60 +49,44 @@ const Page = () => {
     }
   }, [sessionId, lastFetchTime]);
 
-  // Optimized refresh function that doesn't show loading
   const handleNewMessage = useCallback(() => {
     fetchMessages(false);
   }, [fetchMessages]);
 
   useEffect(() => {
-    fetchMessages(true); // Force initial load
-  }, [sessionId]); // Only depend on sessionId
+    fetchMessages(true);
+  }, [sessionId]);
 
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)] space-y-4">
-        <div className="relative">
-          <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
-          <div className="absolute inset-0 w-10 h-10 border-2 border-blue-200 rounded-full animate-ping"></div>
-        </div>
+        <Loader2 className="w-8 h-8 text-gray-400 animate-spin" />
         <div className="text-center">
-          <p className="text-lg font-medium text-gray-700 dark:text-gray-300">Loading conversation...</p>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Preparing your AI assistant</p>
+          <p className="text-gray-600">Loading conversation...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="h-[calc(100vh-90px)] flex flex-col">
-      {/* Chat Header */}
-      <div className="px-6 py-4 border-b border-gray-200/50 dark:border-gray-700/50 bg-gradient-to-r from-blue-50/50 to-indigo-50/50 dark:from-blue-900/20 dark:to-indigo-900/20">
+    <div className="h-[calc(100vh-90px)] flex flex-col bg-white">
+      {/* Minimalist Header */}
+      <div className="px-6 py-4 border-b border-gray-200">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="relative">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
-                <Bot className="w-5 h-5 text-white" />
-              </div>
-              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white dark:border-gray-800"></div>
+            <div className="w-8 h-8 bg-gray-900 rounded-full flex items-center justify-center">
+              <MessageCircle className="w-4 h-4 text-white " />
             </div>
             <div>
-              <h2 className="font-semibold text-gray-900 dark:text-white">AI Assistant</h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center space-x-1">
-                <span>Active conversation</span>
-                <span>•</span>
-                <span>{messageData.length} messages</span>
+              <h2 className="font-medium text-gray-900 ">Chat</h2>
+              <p className="text-sm text-gray-500 ">
+                {messageData.length} messages
               </p>
             </div>
           </div>
-          <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
-            <div className="flex items-center space-x-1">
-              <Hash className="w-4 h-4" />
-              <span className="font-mono text-xs">{sessionId.slice(-8)}</span>
-            </div>
-            <div className="flex items-center space-x-1">
-              <Clock className="w-4 h-4" />
-              <span>Active</span>
-            </div>
+          <div className="flex items-center space-x-1 text-xs text-gray-400">
+            <Hash className="w-3 h-3" />
+            <span className="font-mono">{sessionId.slice(-8)}</span>
           </div>
         </div>
       </div>
