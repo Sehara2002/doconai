@@ -8,3 +8,15 @@ passlib[bcrypt]
 python-jose[cryptography]
 requests
 pydantic-settings
+google.generativeai
+
+
+langchain_ollama
+langchain_chroma 
+langchain_core.documents 
+os
+pandas 
+PyPDF2
+langchain_ollama.llms 
+langchain_core.prompts 
+vector 

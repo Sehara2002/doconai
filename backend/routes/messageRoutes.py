@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 from util.gemini import get_ai_reply
 from typing import Optional
 import pytz
+from LLM.model import get_legal_response
 
 
 SRI_LANKA_TZ = pytz.timezone('Asia/Colombo')
@@ -87,7 +88,8 @@ async def add_message(
             try:
                 # Generate a reply using the AI
                 prompt = message.content
-                ai_reply = get_ai_reply(prompt)
+                # ai_reply = get_ai_reply(prompt)
+                ai_reply = get_legal_response(prompt)
 
                 # 4. Create a new MessageCreate instance for the reply
                 reply_message = MessageCreate(
