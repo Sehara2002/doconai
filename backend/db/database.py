@@ -15,6 +15,9 @@ if not DB_NAME:
 
 
 client = AsyncIOMotorClient(MONGO_URI)
+if not client:
+    raise ConnectionError("❌ Failed to connect to MongoDB. Please check your MONGO_URI.")
+
 db = client[DB_NAME]
 users_collection = db["users"]
 sessions_collection = db["sessions"]

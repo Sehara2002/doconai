@@ -36,7 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 useEffect(() => {
   const checkAuth = async () => {
     try {
-      const response = await axios.get('http://localhost:8000/auth/me', {
+      const response = await axios.get('http://127.0.0.1:8000/auth/me', {
         withCredentials: true,
       });
       
@@ -58,10 +58,10 @@ useEffect(() => {
 
   const login = async (email: string, password: string) => {
     try {
-      const response = await axios.post('http://localhost:8000/auth/login',{ email, password }, {withCredentials: true});
+      const response = await axios.post('http://127.0.0.1:8000/auth/login',{ email, password }, {withCredentials: true});
       
       // Verify login was successful
-      const meResponse = await axios.get('http://localhost:8000/auth/me', {withCredentials: true});
+      const meResponse = await axios.get('http://127.0.0.1:8000/auth/me', {withCredentials: true});
       
       setUser(meResponse.data);
     } catch (error) {
@@ -73,7 +73,7 @@ useEffect(() => {
   const logout = async () => {
     try {
       await axios.post(
-        'http://localhost:8000/auth/logout', 
+        'http://127.0.0.1:8000/auth/logout',
         {},
         { withCredentials: true }
       );
@@ -86,7 +86,7 @@ useEffect(() => {
 const refreshTokens = async () => {
   try {
     await axios.post(
-      'http://localhost:8000/auth/refresh',
+      'http://127.0.0.1:8000/auth/refresh',
       {},
       { withCredentials: true }
     );
@@ -99,11 +99,11 @@ const refreshTokens = async () => {
 
 const signup = async (formData: SignupFormData) => {
   try {
-    const response = await axios.post('http://localhost:8000/auth/signup',formData,{ withCredentials: true }
+    const response = await axios.post('http://127.0.0.1:8000/auth/signup',formData,{ withCredentials: true }
     );
     // Get the user info after signup
     const meResponse = await axios.get(
-      'http://localhost:8000/auth/me',
+      'http://127.0.0.1:8000/auth/me',
       { withCredentials: true }
     );
 
