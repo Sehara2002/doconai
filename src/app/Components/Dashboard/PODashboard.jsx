@@ -408,10 +408,10 @@ export default function DashboardContent() {
                   {project.project_status || 'Upcoming'}
                 </span>
               </div>
-              <p className="text-sm text-gray-600 mb-2 line-clamp-2">{project.projectLead}</p>
+              <p className="text-sm text-gray-600 mb-2 line-clamp-2">{project.client}</p>
               <div className="flex justify-between items-center text-sm text-gray-500">
-                <span>Lead: {project.projectLead}</span>
-                <span>{new Date(project.startDate).toLocaleDateString()}</span>
+                <span>Client: {project.client}</span>
+                <span>{new Date(project.start_date).toLocaleDateString()}</span>
               </div>
             </div>
           ))}
