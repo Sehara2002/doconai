@@ -1,0 +1,17 @@
+fastapi
+uvicorn
+motor
+pydantic
+python-dotenv
+pydantic[email]
+passlib[bcrypt]
+python-jose[cryptography]
+requests
+pydantic-settings
+google.generativeai
+langchain_ollama
+langchain_chroma 
+langchain-core
+pandas 
+PyPDF2
+vector 
