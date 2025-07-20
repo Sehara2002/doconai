@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Briefcase, ShieldCheck, Scale, ArrowLeft, Plus } from "lucide-react";
 import axios from "axios";
@@ -48,6 +48,7 @@ const initialDocuments = [
 const ProjectPage = () => {
   const { id } = useParams();
   const router = useRouter();
+  const searchInputRef = useRef(null);
 
   // Debugging for the project ID
   console.log("🔍 ProjectPage DEBUG: id from useParams:", id);
@@ -67,7 +68,9 @@ const ProjectPage = () => {
   // Staff Assignment Modal State
   const [showStaffModal, setShowStaffModal] = useState(false);
   const [staffList, setStaffList] = useState([]);
-
+  const [searchTerm, setSearchTerm] = useState("");
+  const [assignedStaff, setAssignedStaff] = useState([]);
+  
   // Document States
   const [selectedDocs, setSelectedDocs] = useState([]);
   const [documents, setDocuments] = useState(initialDocuments);
@@ -96,7 +99,7 @@ const ProjectPage = () => {
   useEffect(() => {
     const fetchStaff = async () => {
       try {
-        const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/staff/getstaff`);
+        const response = await axios.get("http://localhost:8000/staff/getstaff");
         console.log("Fetched staff:", response.data);
         setStaffList(response.data);
       } catch (error) {
@@ -106,13 +109,37 @@ const ProjectPage = () => {
     fetchStaff();
   }, []);
 
-  // ... your existing useEffect hooks ...
+  // Fetch assigned staff for the project
+  useEffect(() => {
+    const fetchAssignedStaff = async () => {
+      if (!id) return;
+      try {
+        console.log("🔍 Fetching assigned staff for project:", id);
+        const response = await axios.get(`http://localhost:8000/staff/projects/${id}/assigned-staff`);
+        console.log("🔍 Assigned staff response:", response);
+        console.log("🔍 Assigned staff data:", response.data);
+        if (response.data && response.data.staff_members) {
+          console.log("🔍 Setting assigned staff:", response.data.staff_members);
+          setAssignedStaff(response.data.staff_members);
+        } else {
+          console.log("🔍 No staff_members found in response");
+          setAssignedStaff([]);
+        }
+      } catch (error) {
+        console.error("❌ Error fetching assigned staff:", error);
+        console.error("❌ Error response:", error.response);
+      }
+    };
+    fetchAssignedStaff();
+  }, [id]);
+
+ 
 
   useEffect(() => {
     async function fetchProject() {
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/projects/getproject/${id}`
+          `http://127.0.0.1:8000/projects/getproject/${id}`
         );
         const data = await response.json();
         setProjectData(data);
@@ -130,7 +157,7 @@ const ProjectPage = () => {
   useEffect(() => {
     if (!id) return;
     setLoading(true);
-    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/doc/ProjectDocs/${id}`)
+    fetch(`http://127.0.0.1:8000/api/doc/ProjectDocs/${id}`)
       .then((res) => res.json())
       .then((data) => {
         const mappedDocs = (data.documents || []).map((doc) => ({
@@ -195,7 +222,7 @@ const ProjectPage = () => {
     const token =
       typeof window !== "undefined" ? localStorage.getItem("token") : null;
     if (!token) return;
-    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/user/decode-token?token=${token}`)
+    fetch(`http://127.0.0.1:8000/user/decode-token?token=${token}`)
       .then((res) => res.json())
       .then((user) => {
         setUserInfo({
@@ -240,15 +267,18 @@ const ProjectPage = () => {
     try {
       const staffId = staff.id || staff._id;
       const response = await axios.put(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/staff/assignProject/${staffId}/${id}`
+        `http://localhost:8000/staff/assignProject/${staffId}/${id}`
       );
       console.log("Staff assigned successfully:", response.data);
       
       // Close modal after successful assignment
       setShowStaffModal(false);
       
-      // Optionally refresh project data or show success message
-      // You might want to refetch project data here to update the UI
+      // Refresh assigned staff list
+      const assignedResponse = await axios.get(`http://localhost:8000/staff/projects/${id}/assigned-staff`);
+      if (assignedResponse.data && assignedResponse.data.staff_members) {
+        setAssignedStaff(assignedResponse.data.staff_members);
+      }
       
     } catch (error) {
       console.error("Error assigning project:", error);
@@ -275,7 +305,7 @@ const ProjectPage = () => {
     // Delete each selected document by document_id (integer)
     await Promise.all(
       selectedDocs.map(async (docId) => {
-        await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/doc/delete/${docId}`, {
+        await fetch(`http://localhost:8000/api/doc/delete/${docId}`, {
           method: "DELETE",
         });
       })
@@ -342,10 +372,10 @@ const ProjectPage = () => {
 
   const handleDeleteClick = (user) => {
     const userToDelete = {
-      id: user.staff_id || user.id,
-      name: user.staff_fname
-        ? `${user.staff_fname} ${user.staff_lname}`
-        : user.name,
+      id: user.id || user.staff_id,
+      name: user.first_name && user.last_name 
+        ? `${user.first_name} ${user.last_name}` 
+        : user.name || `${user.staff_fname || ''} ${user.staff_lname || ''}`.trim(),
     };
     setUserToDelete(userToDelete);
   };
@@ -388,17 +418,20 @@ const ProjectPage = () => {
     if (!userToDelete) return;
 
     try {
-      const response = await fetch(`/api/staff/${userToDelete.id}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to delete user");
+      // Remove staff from project instead of deleting the staff member entirely
+      const response = await axios.put(`http://localhost:8000/staff/unassignProject/${userToDelete.id}/${id}`);
+      
+      if (response.status === 200) {
+        // Refresh assigned staff list
+        const assignedResponse = await axios.get(`http://localhost:8000/staff/projects/${id}/assigned-staff`);
+        if (assignedResponse.data && assignedResponse.data.staff_members) {
+          setAssignedStaff(assignedResponse.data.staff_members);
+        }
       }
 
       setUserToDelete(null);
     } catch (error) {
-      console.error("Error deleting user:", error);
+      console.error("Error removing user from project:", error);
     }
   };
 
@@ -419,38 +452,102 @@ const ProjectPage = () => {
   const StaffAssignmentModal = () => {
     if (!showStaffModal) return null;
 
+    // Get IDs of already assigned staff
+    const assignedStaffIds = assignedStaff.map(staff => staff.id);
+
+    // Filter out already assigned staff
+    const availableStaff = staffList.filter((staff) => {
+      const staffId = staff.id || staff._id;
+      return !assignedStaffIds.includes(staffId);
+    });
+
+    // Apply search filter to available staff
+    const filteredStaff = availableStaff.filter((staff) => {
+      const fullName = `${staff.first_name} ${staff.last_name}`.toLowerCase();
+      return fullName.includes(searchTerm.toLowerCase());
+    });
+
+    // Focus the search input when modal opens
+    useEffect(() => {
+      if (showStaffModal && searchInputRef.current) {
+        setTimeout(() => {
+          searchInputRef.current.focus();
+        }, 100);
+      }
+    }, [showStaffModal]);
+
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-xl shadow-lg p-6 w-96">
+      <div 
+        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+        onClick={(e) => {
+          // Close modal when clicking outside
+          if (e.target === e.currentTarget) {
+            setShowStaffModal(false);
+            setSearchTerm(""); // Reset search term
+          }
+        }}
+      >
+        <div className="bg-white rounded-xl shadow-lg p-6 w-96" onClick={(e) => e.stopPropagation()}>
           <h2 className="text-xl font-bold mb-4">Select Staff Member</h2>
+
+          <input
+            ref={searchInputRef}
+            type="text"
+            placeholder="Search by name"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            autoFocus
+          />
+
           <div className="space-y-2 max-h-64 overflow-y-auto">
-            {staffList && staffList.length > 0 ? (
-              staffList.map((staff) => (
+            {filteredStaff && filteredStaff.length > 0 ? (
+              filteredStaff.map((staff) => (
                 <div
                   key={staff.id}
                   className="flex items-center justify-between border-b pb-2"
                 >
-                  <span className="font-medium">
-                    {staff.first_name} {staff.last_name}
-                  </span>
+                  <div className="flex flex-col">
+                    <span className="font-medium">
+                      {staff.first_name} {staff.last_name}
+                    </span>
+                    <span className="text-sm text-gray-500">{staff.role}</span>
+                  </div>
                   <button
                     onClick={() => handleAddStaff(staff)}
-                    className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
+                    className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition-colors"
                   >
                     Add
                   </button>
                 </div>
               ))
             ) : (
-              <p>No staff members found.</p>
+              <p className="text-gray-500 text-center py-4">
+                {searchTerm ? "No staff members match your search." : "No available staff members found."}
+              </p>
             )}
           </div>
-          <button
-            onClick={() => setShowStaffModal(false)}
-            className="mt-4 w-full bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded"
-          >
-            Close
-          </button>
+          
+          <div className="flex gap-2 mt-4">
+            <button
+              onClick={() => {
+                setShowStaffModal(false);
+                setSearchTerm(""); // Reset search term when closing
+              }}
+              className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded transition-colors"
+            >
+              Close
+            </button>
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm("")}
+                className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded transition-colors"
+                title="Clear search"
+              >
+                Clear
+              </button>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -518,7 +615,7 @@ const ProjectPage = () => {
           {/* User Section */}
           <UserManagement
             projectId={id}
-            users={staffList} // Will be overridden by project staff
+            users={assignedStaff} // Show only assigned staff members
             onEditUser={handleEditUser}
             onDeleteUser={handleDeleteClick}
             onAssignUser={handleAssignUserToProject}
@@ -527,7 +624,10 @@ const ProjectPage = () => {
           {/* Add Staff Button */}
           <div className="mt-8 flex justify-between items-center">
             <button
-              onClick={() => setShowStaffModal(true)}
+              onClick={() => {
+                setSearchTerm(""); // Reset search when opening modal
+                setShowStaffModal(true);
+              }}
               className="inline-flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
             >
               <Plus size={20} />
