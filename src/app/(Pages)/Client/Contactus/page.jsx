@@ -106,22 +106,22 @@ const ContactPage = () => {
     {
       icon: <Mail className="w-6 h-6" />,
       title: "Email Us",
-      content: "contact@DoconAI.com",
+      content: "docon.ai@gmail.com",
       description: "We'll respond within 24 hours",
-      href: "mailto:contact@DoconAI.com"
+      href: "mailto:docon.ai@gmail.com"
     },
     {
       icon: <Phone className="w-6 h-6" />,
       title: "Call Us",
-      content: "+1 (234) 567-8900",
+      content: "+94 77 117 20 96",
       description: "Mon-Fri 9AM-6PM EST",
-      href: "tel:+1234567890"
+      href: "tel:+94771172096"
     },
     {
       icon: <MapPin className="w-6 h-6" />,
       title: "Visit Us",
-      content: "123 Construction Ave",
-      description: "Tech City, TC 12345",
+      content: "University of Moratuwa",
+      description: "Katubedda, Sri Lanka",
       href: "#"
     },
     {

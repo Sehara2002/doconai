@@ -121,20 +121,20 @@ const Footer = () => {
               <div className="flex items-start space-x-3">
                 <MapPin className="w-5 h-5 text-blue-400 mt-0.5" />
                 <div>
-                  <p className="text-slate-400">123 Construction Ave</p>
-                  <p className="text-slate-400">Tech City, TC 12345</p>
+                  <p className="text-slate-400">University of Moratuwa</p>
+                  <p className="text-slate-400">Katubedda</p>
                 </div>
               </div>
               <div className="flex items-center space-x-3">
                 <Phone className="w-5 h-5 text-blue-400" />
                 <a href="tel:+1234567890" className="text-slate-400 hover:text-white transition-colors duration-200">
-                  +1 (234) 567-8900
+                  +94 77 117 20 96
                 </a>
               </div>
               <div className="flex items-center space-x-3">
                 <Mail className="w-5 h-5 text-blue-400" />
                 <a href="mailto:contact@DoconAI.com" className="text-slate-400 hover:text-white transition-colors duration-200">
-                  contact@DoconAI.com
+                  docon.ai@gmail.com
                 </a>
               </div>
             </div>
