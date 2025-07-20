@@ -1,4 +1,5 @@
 'use client';
+
 import { useState } from 'react';
 
 export default function ResetRequestPage() {
@@ -14,7 +15,7 @@ export default function ResetRequestPage() {
     setLoading(true);
 
     try {
-      const res = await fetch('http://localhost:8000/user/request-reset', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/user/request-reset`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email_or_username: input }),
@@ -39,7 +40,7 @@ export default function ResetRequestPage() {
     <div className="min-h-screen flex items-center justify-center bg-blue-100 p-4">
       <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
         <h2 className="text-2xl font-bold mb-4 text-[#166394]">Forgot Password?</h2>
-        <p className="text-sm text-gray-600 mb-4">{"Enter your username or email. We'll send you a reset link."}</p>
+        <p className="text-sm text-gray-600 mb-4">Enter your username or email. We'll send you a reset link.</p>
 
         {error && <p className="text-red-500 mb-2">{error}</p>}
         {message && <p className="text-green-600 mb-2">{message}</p>}

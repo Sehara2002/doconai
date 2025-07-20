@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 
-function ResetPasswordForm() {
+export default function ResetPasswordPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const token = searchParams.get('token');
@@ -38,7 +38,7 @@ function ResetPasswordForm() {
     setLoading(true);
 
     try {
-      const res = await fetch('http://localhost:8000/user/reset-password', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/user/reset-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -103,19 +103,5 @@ function ResetPasswordForm() {
         </form>
       </div>
     </div>
-  );
-}
-
-export default function ResetPasswordPage() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-blue-100 to-blue-300">
-        <div className="bg-white p-8 rounded-xl shadow-lg">
-          <div className="text-center">Loading...</div>
-        </div>
-      </div>
-    }>
-      <ResetPasswordForm />
-    </Suspense>
   );
 }

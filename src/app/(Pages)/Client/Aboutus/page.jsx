@@ -2,8 +2,8 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Users, Target, Award, Lightbulb, ArrowRight, CheckCircle, Star } from 'lucide-react';
-import Header from '../../../Components/Common/Header';
-import Footer from '../../../Components/Common/Footer';
+import Header from '../../../Components/common/Header';
+import Footer from '../../../Components/common/Footer';
 
 const AboutPage = () => {
   const [isVisible, setIsVisible] = useState(false);
