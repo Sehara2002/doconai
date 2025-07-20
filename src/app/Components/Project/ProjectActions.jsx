@@ -4,7 +4,7 @@ import React from "react";
 import Button from "./Button";
 import { Trash2, FileCheck2 } from "lucide-react";
 
-const ProjectActions = ({ onDeleteProject, onSummarize, showDelete = true }) => {
+const ProjectActions = ({ onDeleteProject, onSummarize, showDelete }) => {
     return (
         <div className="mt-4 flex gap-3">
             {showDelete && (

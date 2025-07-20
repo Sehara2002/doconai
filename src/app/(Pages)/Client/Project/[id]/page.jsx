@@ -222,7 +222,7 @@ const ProjectPage = () => {
     const token =
       typeof window !== "undefined" ? localStorage.getItem("token") : null;
     if (!token) return;
-    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/decode-token?token=${token}`)
+    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/user/decode-token?token=${token}`)
       .then((res) => res.json())
       .then((user) => {
         setUserInfo({

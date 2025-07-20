@@ -28,7 +28,7 @@ export default function DashboardContent() {
   useEffect(() => {
     console.log('Documents state updated:', documents);
     console.log('Documents array length:', documents.length);
-  }, [documents]);
+  }, [documents])
 
   const fetchDashboardData = async () => {
     try {
