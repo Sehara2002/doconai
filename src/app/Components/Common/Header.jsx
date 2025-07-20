@@ -140,15 +140,15 @@ const Header = () => {
               ))}
               <div className="pt-4 border-t border-slate-200 space-y-2">
                 <Link
-                  href="/login"
-                  className="block text-slate-700 hover:text-blue-600 font-medium py-2 transition-colors duration-200"
+                  href="/Client/Login"
+                  className="block bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-4 py-2 rounded-lg font-medium text-center w-[90%] align-middle justify-center"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Login
                 </Link>
                 <Link
-                  href="/signup"
-                  className="block bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-4 py-2 rounded-lg font-medium text-center"
+                  href="/Client/Signup"
+                  className="block bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-4 py-2 rounded-lg font-medium text-center w-[90%]"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Sign Up
