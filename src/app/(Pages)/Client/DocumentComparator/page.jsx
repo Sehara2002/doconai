@@ -1,12 +1,16 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import axios from "axios";
 import DocumentSidebar from '../../../Components/DocumentComponents/DocumentSidebar';
 import "../../../CSS/documentcomparator/comparator.css";
 import UserProfileMenu from "../../../Components/Common/UserProfileMenu";
-import { toast } from "react-toastify";
+import { useNotifications } from '../../../Components/Common/NotificationSystem';
+
+
 
 export default function Home() {
+  const notify = useNotifications();
+  const fileInputRef = useRef(null);
   const [file, setFile] = useState(null);
   const [doc1, setDoc1] = useState("");
   const [doc2, setDoc2] = useState("");
@@ -19,10 +23,11 @@ export default function Home() {
   const [uploadedDocs, setUploadedDocs] = useState([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const [showResults, setShowResults] = useState(true);
 
   useEffect(() => {
     const checkScreenSize = () => {
-      const mobile = window.innerWidth < 1024;
+      const mobile = window.innerWidth < 1024; // same breakpoint
       setIsMobile(mobile);
       setIsSidebarOpen(!mobile);
     };
@@ -46,77 +51,31 @@ export default function Home() {
       setUploadedDocs(res.data.documents || []);
     } catch (error) {
       console.error("Failed to fetch documents", error);
-      toast.error("Failed to fetch documents");
     }
-  };
-
-  const validateFile = (file) => {
-    // Check file size (limit to 50MB)
-    const maxSize = 50 * 1024 * 1024; // 50MB
-    if (file.size > maxSize) {
-      toast.error("File size too large. Maximum size is 50MB.");
-      return false;
-    }
-
-    // Check file type
-    const allowedTypes = [
-      'application/pdf',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'application/msword',
-      'text/plain'
-    ];
-    
-    if (!allowedTypes.includes(file.type)) {
-      toast.error("Invalid file type. Please upload PDF, DOC, DOCX, or TXT files.");
-      return false;
-    }
-
-    return true;
   };
 
   const handleUpload = async () => {
     if (!file) {
-      toast.error("Please select a file to upload.");
+      notify.error("Please select a file to upload.");
       return;
     }
-
-    if (!validateFile(file)) {
-      return;
-    }
-
     setUploading(true);
     const formData = new FormData();
     formData.append("file", file);
 
     try {
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/upload`, 
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-          timeout: 120000, // 2 minute timeout
-        }
-      );
-      
-      toast.success("File uploaded successfully.");
+      await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/upload`, formData);
+      notify.success("File uploaded successfully.");
       setFile(null);
-      // Reset file input
-      const fileInput = document.querySelector('input[type="file"]');
-      if (fileInput) fileInput.value = '';
-      
-      await fetchDocuments();
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ""; // ✅ clear file input field
+      }
+      fetchDocuments(); // <-- Fetch documents after upload
     } catch (error) {
       console.error("Upload failed", error);
-      if (error.response?.status === 413) {
-        toast.error("File too large. Please upload a smaller file.");
-      } else if (error.response?.status === 415) {
-        toast.error("Unsupported file type. Please upload PDF, DOC, DOCX, or TXT files.");
-      } else if (error.code === 'ECONNABORTED') {
-        toast.error("Upload timeout. Please try with a smaller file.");
-      } else {
-        toast.error(error.response?.data?.detail || "Upload failed. Please try again.");
+      notify.error("File upload failed. Please try again.");
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
       }
     } finally {
       setUploading(false);
@@ -125,17 +84,12 @@ export default function Home() {
 
   const handleCompare = async () => {
     if (!doc1 || !doc2) {
-      toast.error("Please select two documents.");
+      notify.error("Please select both documents to compare.");
       return;
     }
 
-    if (doc1 === doc2) {
-      toast.error("Please select two different documents.");
-      return;
-    }
-
-    setComparing(true);
-    setResult("");
+    setComparing(true); // Show scanner
+    setResult(""); // Clear previous result
 
     const formData = new FormData();
     formData.append("file1_name", doc1);
@@ -143,51 +97,22 @@ export default function Home() {
     formData.append("comparison_type", comparisonType);
 
     if (comparisonType === "text") {
-      if (!topic || topic.trim() === "") {
-        toast.error("Please enter a topic for text-based comparison.");
+      if (!topic) {
+        notify.error("Please enter a topic for text-based comparison.");
         setComparing(false);
         return;
       }
-      formData.append("topic", topic.trim());
+      formData.append("topic", topic);
     }
 
     try {
-      const res = await axios.post(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/compare`, 
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-          timeout: 300000, // 5 minute timeout for comparison
-        }
-      );
-      
-      if (res.data && res.data.result) {
-        setResult(JSON.stringify(res.data.result, null, 2));
-        toast.success("Documents compared successfully!");
-      } else {
-        toast.error("No comparison result received.");
-      }
+      const res = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/compare`, formData);
+      setResult(JSON.stringify(res.data.result, null, 2));
     } catch (error) {
       console.error("Compare failed", error);
-      
-      let errorMessage = "Comparison failed. Please try again.";
-      
-      if (error.response?.status === 400) {
-        errorMessage = error.response.data?.detail || "Invalid request. Please check your files and try again.";
-      } else if (error.response?.status === 500) {
-        errorMessage = "Server error. The document may be corrupted or unsupported. Please try with different files.";
-      } else if (error.code === 'ECONNABORTED') {
-        errorMessage = "Comparison timeout. Please try with smaller files.";
-      } else if (error.response?.data?.detail) {
-        errorMessage = error.response.data.detail;
-      }
-      
-      toast.error(errorMessage);
-      setResult(""); // Clear any previous results
+      notify.error("Comparison failed. Please try again.");
     } finally {
-      setComparing(false);
+      setComparing(false); // Hide scanner
     }
   };
 
@@ -195,14 +120,17 @@ export default function Home() {
   const doc2Options = uploadedDocs.filter((d) => d !== doc1);
 
   return (
+
     <div className="flex h-screen overflow-hidden">
+
+
       <DocumentSidebar
         isOpen={isSidebarOpen}
         onToggle={toggleSidebar}
         isMobile={isMobile}
         active={'documentComparator'}
       />
-       
+
       <main className={`flex-1 overflow-y-auto p-8 transition-all duration-300 ease-in-out ${!isMobile && isSidebarOpen ? 'ml-60' : 'ml-0'}`}>
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl text-gray-900">Document Comparator</h1>
@@ -218,19 +146,12 @@ export default function Home() {
               className="form-control"
               onChange={(e) => setFile(e.target.files?.[0] || null)}
               disabled={uploading}
-              accept=".pdf,.doc,.docx,.txt"
+              ref={fileInputRef}
             />
-            <button 
-              className="btn btn-success" 
-              onClick={handleUpload} 
-              disabled={uploading || !file}
-            >
+            <button className="btn btn-success" onClick={handleUpload} disabled={uploading && !file}>
               {uploading ? "Uploading..." : "Upload"}
             </button>
           </div>
-          <small className="form-text text-muted">
-            Supported formats: PDF, DOC, DOCX, TXT (Max size: 50MB)
-          </small>
         </div>
 
         {/* Compare Section */}
@@ -243,12 +164,7 @@ export default function Home() {
               <select
                 className="form-select"
                 value={doc1}
-                onChange={(e) => {
-                  setDoc1(e.target.value);
-                  if (doc2 === e.target.value) {
-                    setDoc2(""); // Clear doc2 if it's the same as doc1
-                  }
-                }}
+                onChange={(e) => setDoc1(e.target.value)}
               >
                 <option value="">Select Document 1</option>
                 {uploadedDocs.map((doc) => (
@@ -265,7 +181,7 @@ export default function Home() {
                 className="form-select"
                 value={doc2}
                 onChange={(e) => setDoc2(e.target.value)}
-                disabled={!doc1 || doc2Options.length === 0}
+                disabled={!doc1}
               >
                 <option value="">Select Document 2</option>
                 {doc2Options.map((doc) => (
@@ -282,10 +198,7 @@ export default function Home() {
             <select
               className="form-select"
               value={comparisonType}
-              onChange={(e) => {
-                setComparisonType(e.target.value);
-                setTopic(""); // Clear topic when changing comparison type
-              }}
+              onChange={(e) => setComparisonType(e.target.value)}
             >
               <option value="text">Text-Based Comparison</option>
               <option value="numeric">Numerical & Cost Comparison</option>
@@ -303,30 +216,23 @@ export default function Home() {
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
                 placeholder="Enter topic for text-based comparison"
-                maxLength={200}
               />
-              <small className="form-text text-muted">
-                Enter a specific topic to focus the comparison (e.g., "safety requirements", "cost analysis")
-              </small>
             </div>
           )}
 
-          <button 
-            className="btn btn-primary" 
-            onClick={handleCompare}
-            disabled={comparing || !doc1 || !doc2}
-          >
-            {comparing ? "Comparing..." : "Compare"}
+          <button className="btn btn-primary" onClick={handleCompare}>
+            Compare
           </button>
         </div>
 
         <div className="p-4 border rounded">
           <h2 className="h5 mb-2">Comparison Result:</h2>
           <div className="result-box">
+
             {comparing ? (
               <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
                 <span className="spinner-border text-primary" role="status" aria-hidden="true"></span>
-                <span>Comparing documents... This may take a few minutes.</span>
+                <span>Comparing...</span>
               </div>
             ) : result ? (
               (() => {
@@ -336,7 +242,7 @@ export default function Home() {
                 } catch {
                   return <pre className="bg-light p-3 rounded">{result}</pre>;
                 }
-                
+
                 // Helper to render bullet points
                 const renderList = (items) => {
                   if (Array.isArray(items) && items.length > 0) {
@@ -356,7 +262,7 @@ export default function Home() {
                   <div>
                     <div className="mb-3 d-flex flex-wrap gap-3 align-items-center">
                       <span className="badge bg-info text-dark fs-5 px-3 py-2">
-                        <strong>Topic:</strong> {parsed.topic || "General Comparison"}
+                        <strong>Topic:</strong> {parsed.topic}
                       </span>
                       <span className="badge bg-secondary text-light fs-6 px-3 py-2">
                         <strong>Comparison Type:</strong> {comparisonType.charAt(0).toUpperCase() + comparisonType.slice(1)}
@@ -364,10 +270,10 @@ export default function Home() {
                     </div>
                     <div className="mb-3 d-flex flex-wrap gap-3 align-items-center">
                       <span className="badge bg-primary text-light fs-6 px-3 py-2">
-                        <strong>Document 1:</strong> {doc1}
+                        <strong>Document 1 Name:</strong> {doc1}
                       </span>
                       <span className="badge bg-success text-light fs-6 px-3 py-2">
-                        <strong>Document 2:</strong> {doc2}
+                        <strong>Document 2 Name:</strong> {doc2}
                       </span>
                     </div>
                     <div className="table-responsive mb-3">
@@ -390,14 +296,23 @@ export default function Home() {
                       <strong>Summary:</strong>
                       {renderList(parsed.summary)}
                     </div>
+                    <div>
+                      <div className="text-end mb-3 mt-2">
+                        <button className="btn btn-danger btn-sm px-4 py-2 rounded shadow custom-close-btn"
+                          onClick={() => {
+                            setShowResults(false);
+                            setResult("");
+                          }}
+                        >
+                          <i className="bi bi-x-lg"></i> Close
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 );
               })()
             ) : (
-              <div className="text-muted">
-                <p>No result yet. Select two documents and click "Compare" to start.</p>
-                <p><small>Note: Large documents may take several minutes to process.</small></p>
-              </div>
+              "No result yet."
             )}
           </div>
         </div>
