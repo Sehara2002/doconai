@@ -207,7 +207,7 @@ export default function Home() {
             </select>
           </div>
 
-          {comparisonType === "text" && (
+          {(comparisonType === "text" || comparisonType === "smart") && (
             <div className="mb-3">
               <label className="form-label">Input a Topic:</label>
               <input
@@ -215,7 +215,11 @@ export default function Home() {
                 className="form-control"
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
-                placeholder="Enter topic for text-based comparison"
+                placeholder={
+                  comparisonType === "text"
+                    ? "Enter topic for text-based comparison"
+                    : "Enter topic for AI-powered smart comparison"
+                }
               />
             </div>
           )}
